@@ -1,2 +1,2 @@
-worker: node app.local.js
+worker: node app.js
 web: node index.js
