@@ -24,10 +24,11 @@ bot.on('message', function(event) {
         case 'text':
             const originalString = event.message.text
             const messageObject = HandleIncoming.switchIncomingType(originalString)
+    
             switch (messageObject.type) {
                 case MESSAGE_TYPE_BANK_RATE:
                     //TODO收尋條件 maybe
-                    
+            
                     //拿資料回傳
                     getFireBaseDataByBankCode(messageObject.value)
                         .then((result)=>{
@@ -35,37 +36,68 @@ bot.on('message', function(event) {
                             const resultString = HandleIncoming.bankResultDictToString(result)
                             replayTextMessage(event, resultString)
                         }).catch((e) => {
-                            replayTextMessage(event, e.message)
-                        
+                        replayTextMessage(event, e.message)
+                
                     })
                     break
                 case MESSAGE_TYPE_BEST_RATE:
-    
+            
                     getFireBaseBestRateByCurrency(messageObject.value)
                         .then((result) => {
                             const resultString = HandleIncoming.bestRateResultDictToString(messageObject.value,result)
                             replayTextMessage(event, resultString)
                         }).catch(e => {
-                            replayTextMessage(event, e.message)
+                        replayTextMessage(event, e.message)
                     })
-                    
+            
                     break
                 case MESSAGE_TYPE_WORNG_COMMAND:
                     event.reply('此條件查無此資料，更多使用方式請輸入/help').then((data) => {
-        
+                
                     }).catch((error) => {
-                    
+                
                     });
                     break
                 case MESSAGE_TYPE_PASS:
                     //不處理
-                    console.log('no response')
+                    event.reply({
+                        "type": "imagemap",
+                        "baseUrl": "https://us.123rf.com/450wm/gar1984/gar19841707/gar1984170700191/82754968-beautiful-young-woman-with-black-hat-carries-brown-vintage-suitcase-in-the-field-road-during-summer-.jpg?ver=6",
+                        "altText": "This is an imagemap",
+                        "baseSize": {
+                            "height": 1040,
+                            "width": 1040
+                        },
+                        "actions": [
+                            {
+                                "type": "uri",
+                                "linkUri": "https://www.fotor.com/images2/features/crop/crop_2.jpg",
+                                "area": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "width": 520,
+                                    "height": 1040
+                                }
+                            },
+                            {
+                                "type": "message",
+                                "text": "Hello",
+                                "area": {
+                                    "x": 520,
+                                    "y": 0,
+                                    "width": 520,
+                                    "height": 1040
+                                }
+                            }
+                        ]
+                    })
                     break
                 case MESSAGE_TYPE_NO_MATCH:
                     break
             }
             break
         case 'location':
+            event.reply(['That\'s a good location!', 'Lat:' + event.message.latitude, 'Long:' + event.message.longitude]);
             event.reply(['That\'s a good location!', 'Lat:' + event.message.latitude, 'Long:' + event.message.longitude]);
             break;
         case 'sticker':
@@ -79,15 +111,24 @@ bot.on('message', function(event) {
             event.reply('Unknow message: ' + JSON.stringify(event));
             break;
     }
-    
-    
+
+
 });
 
 const replayTextMessage = (event,text) => {
     event.reply(text).then((data) => {
-    
+
     }).catch((error) => {
-    
+
+    })
+}
+
+
+const replayImageMessage = (event,text) => {
+    event.reply(text).then((data) => {
+
+    }).catch((error) => {
+
     })
 }
 
@@ -107,7 +148,9 @@ bot.on('leave', function (event) {
     event.reply('leave: ' + event.source.groupId);
 });
 
+//按鈕回傳 使用者不用再打字
 bot.on('postback', function (event) {
+    console.log(event);
     event.reply('postback: ' + event.postback.data);
 });
 
@@ -116,9 +159,10 @@ bot.on('beacon', function (event) {
 });
 
 
-app.post('/webhook', linebotParser);
-// 在 localhost 走 8080 port
 
+app.post('/webhook', linebotParser);
+
+// 在 localhost 走 8080 port
 let server = app.listen(process.env.PORT || 8080, function() {
     let port = server.address().port;
     console.log("My Line bot App running on port", port);

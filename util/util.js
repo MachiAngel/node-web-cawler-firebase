@@ -11,73 +11,51 @@ const {FirebaseDb} = require('../db/firebaseDb')
 const SupportCurrency = require('../util/supportCurrency')
 const cralwer = require('../crawler/crawler')
 
+const YahooMovieCrawler = require('../crawler/yahoo_movie_crawler')
+const yahooCrawler = new YahooMovieCrawler()
 
-//公有方法->設計為一定有bank回傳 沒有的話就創一個 並回傳
-const getBank = async (bankName,bankCode) => {
-    try {
-        const bank = await Bank.findOne({code:bankCode})
-        if(bank){
-            return bank
-        }else{
-            const bank = new Bank({name:bankName,code:bankCode})
-            const savedBank = await bank.save()
-            if (savedBank) {
-                return savedBank
-            }else{
-                throw new Error()
-            }
-            
-        }
-    }catch (e) {
-        throw new Error('can not find or create bank')
-    }
+
+
+const crawlAndSaveYahooMovieToFirebase = async () => {
+
+  try {
+    const resultArray = await yahooCrawler.getFinalYahooTopMovieData()
+
+    const finalDict = {}
+    finalDict[`/YahooTopMovie/`] = resultArray
+    const savedResult = await saveToFireBasePromise(finalDict)
+    return savedResult
+  }catch (e) {
+    return e.message
+  }
+
+
+
 }
-const getLatestRate = async (bankCode,currencyName) => {
-    
-    const latesetRate = await Rate.findOne({
-        bankCode,
-        currencyName
-        })
-        .sort({ time: -1 })
-    
-    if(latesetRate) {
-        console.log(`get lastest ${currencyName} rate of ${latesetRate.bankName} success`)
-        const timeString = moment(latesetRate.time).format('YYYY/MM/DD')
-        console.log(timeString)
-        console.log(latesetRate)
-        return latesetRate
-    }else {
-        console.log(`get lastest ${currencyName} rate of bankcode = ${bankCode} fail`)
-        return undefined
-    }
-    
-}
-
-
 
 //公用function firebase
 const saveLastestRateToFirebase = async (bankCode) => {
     const bankInfo = bankInfoDict[bankCode]
     const finalDict = {}
-    
+
     if (bankInfo === undefined) {
         throw new Error(`沒有${bankCode}的bankInfo資料`)
     }
     const resultDict = await bankInfo.bankCawler()
     const momentResultTime = resultDict.resultTime
-    
+
     //轉換後資料
     const resultTimeString = momentResultTime.format('YYYY/MM/DD HH:mm')
     const newResultDict = parseMomentTimeToStringAndSort(resultDict)
-    
-    
+
+
     //Bank路徑 銀行儲存字典
     const dataDict = {
         bankName:bankInfo.bankName,
         bankCode:bankCode,
         rateTime:resultTimeString,
         rateList:newResultDict}
-    
+
     //幣別儲存字典
     Object.keys(newResultDict).map((key,index) => {
         const rateDict = newResultDict[key]
@@ -86,13 +64,13 @@ const saveLastestRateToFirebase = async (bankCode) => {
         rateDict['bankCode'] = bankCode
         finalDict[`/LatestRate/${key}/${bankCode}`] = rateDict
     })
-    
+
     //上傳
     finalDict[`/Bank/${bankInfo.bankCode}/`] = dataDict
     const savedResult = await saveToFireBasePromise(finalDict)
-    
+
     checkBestRate(dataDict)
-    
+
     if (savedResult != 'success') {
         return undefined
     }
@@ -100,12 +78,12 @@ const saveLastestRateToFirebase = async (bankCode) => {
 }
 
 const checkBestRate = ({bankName, bankCode, rateTime, rateList} ) => {
-    
+
     Object.keys(rateList).map((key,index) => {
-       
+
         const rateDict = rateList[key]
         const {cashBuying, cashSelling, spotBuying, spotSelling} = rateDict
-    
+
         FirebaseDb.ref(`/BestRate/${key}`).transaction((currentValue) => {
             if (currentValue == null) {
                 const dict = {
@@ -114,7 +92,7 @@ const checkBestRate = ({bankName, bankCode, rateTime, rateList} ) => {
                     spotBuying: {spotBuying, bankName, bankCode, rateTime},
                     spotSelling: {spotSelling, bankName, bankCode, rateTime}
                 }
-                
+
                 return dict
             }
             const penddingValue = currentValue
@@ -134,10 +112,10 @@ const checkBestRate = ({bankName, bankCode, rateTime, rateList} ) => {
             }
             return penddingValue
         })
-        
+
     })
-    
-    
+
+
 }
 
 //連路徑都包在dict裡面上傳到firebase
@@ -196,9 +174,9 @@ const parseMomentTimeToStringAndSort = (resultDict) => {
         each.time = each.time.format('YYYY/MM/DD HH:mm')
         return each
     })
-    
+
     const rateDict = {}
-    
+
     newResultArray.forEach(({currencyName,cashBuying,cashSelling,spotBuying,spotSelling}) => {
         rateDict[currencyName] = {cashBuying, cashSelling, spotBuying, spotSelling}
     })
@@ -227,7 +205,7 @@ const refreshBankDataFor = async (bankCode) => {
         {code:bankInfo.bankCode},
         {latestRates:resultDict.resultArray,currencyUpdateTime:resultDict.resultTime},
         {new: true})
-    
+
     if(bank) {
         console.log(`更新${bankInfo.bankName}-即時匯率成功`)
     }
@@ -417,11 +395,10 @@ const bankInfoDict = {
 
 
 module.exports = {
-    getBank,
-    getLatestRate,
     refreshBankDataFor,
     saveLastestRateToFirebase,
     getFireBaseDataByBankCode,
     removeToFireBasePromise,
-    getFireBaseBestRateByCurrency
+    getFireBaseBestRateByCurrency,
+    crawlAndSaveYahooMovieToFirebase
 }

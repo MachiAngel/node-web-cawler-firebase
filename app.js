@@ -1,15 +1,15 @@
-//先載入DB
-// const {mongoose} = require('./db/mongoose.js')
-const {saveLastestRateToFirebase, removeToFireBasePromise} = require('./util/util')
+
+const {saveLastestRateToFirebase, removeToFireBasePromise, crawlAndSaveYahooMovieToFirebase} = require('./util/util')
 const schedule = require('node-schedule')
+
 //const {getHistoryRateFromTaiwanBank} = require('./crawler/crawler.js')
 
 //'*/4 * * * *'  每4分鐘
 
 
-// 每x秒
+// 每x分
 schedule.scheduleJob('*/4 * * * *', () => {
-    console.log('--------開始排程程式碼-----------')
+    console.log('--------開始匯率排程程式碼-----------')
     console.log(new Date())
     
     removeToFireBasePromise()
@@ -21,7 +21,18 @@ schedule.scheduleJob('*/4 * * * *', () => {
         cawlerStart()
     })
     
-    console.log('--------結束排程程式碼-----------')
+    console.log('--------結束匯率排程程式碼-----------')
+})
+
+schedule.scheduleJob('0 */1 * * *', () => {
+    console.log('--------開始電影排程程式碼-----------')
+    crawlAndSaveYahooMovieToFirebase()
+        .then((result) => {
+            console.log(result)
+        }).catch(e => {
+        console.log(e.message)
+    })
+    console.log('--------結束電影排程程式碼-----------')
 })
 
 
