@@ -1,5 +1,5 @@
 
-const {saveLastestRateToFirebase, removeToFireBasePromise, crawlAndSaveYahooMovieToFirebase} = require('./util/util')
+const {saveLastestRateToFirebase, removeToFireBasePromise, crawlAndSaveYahooMovieToFirebase, crawlerAndSaveBeautyArticleToPGDB} = require('./util/util')
 const schedule = require('node-schedule')
 
 //const {getHistoryRateFromTaiwanBank} = require('./crawler/crawler.js')
@@ -33,6 +33,17 @@ schedule.scheduleJob('0 */1 * * *', () => {
         console.log(e.message)
     })
     console.log('--------結束電影排程程式碼-----------')
+    
+    console.log('--------開始表特文章排程程式碼-----------')
+    crawlerAndSaveBeautyArticleToPGDB()
+        .then(resultArray => {
+            console.log(resultArray)
+        }).catch(e => {
+            console.log(e.message)
+    })
+    console.log('--------結束表特文章排程程式碼-----------')
+    
+    
 })
 
 

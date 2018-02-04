@@ -1,19 +1,43 @@
 
 //const
-
 const path = require('path')
 //model
 const moment = require('moment')
 const Bank = require('../model/bank.js')
 const Rate = require('../model/rate.js')
-const {FirebaseDb} = require('../db/firebaseDb')
-//util
-const SupportCurrency = require('../util/supportCurrency')
-const cralwer = require('../crawler/crawler')
 
+//db
+const {FirebaseDb} = require('../db/firebaseDb')
+const {pgdb} = require('../db/pgdb')
+
+
+//util and crawler
+
+const cralwer = require('../crawler/crawler')
 const YahooMovieCrawler = require('../crawler/yahoo_movie_crawler')
 const yahooCrawler = new YahooMovieCrawler()
+const beautyCrawler = require('../crawler/ptt_beauty_crawler')
 
+
+const crawlerAndSaveBeautyArticleToPGDB = async () => {
+    
+    try {
+        const resultArray = await beautyCrawler.getBeautyPageResult(3)
+        const savedResults = []
+        for (let aritcle of resultArray) {
+            try {
+                const savedResult = await beautyCrawler.updateOrInsertArticleToDb('articles',aritcle, pgdb)
+                savedResults.push(savedResult)
+            }catch (e) {
+                savedResults.push(e.message)
+            }
+        }
+        return savedResults
+    }catch (e) {
+        return e.message
+    }
+    
+}
 
 
 const crawlAndSaveYahooMovieToFirebase = async () => {
@@ -28,9 +52,7 @@ const crawlAndSaveYahooMovieToFirebase = async () => {
   }catch (e) {
     return e.message
   }
-
-
-
+  
 }
 
 //公用function firebase
@@ -400,5 +422,6 @@ module.exports = {
     getFireBaseDataByBankCode,
     removeToFireBasePromise,
     getFireBaseBestRateByCurrency,
-    crawlAndSaveYahooMovieToFirebase
+    crawlAndSaveYahooMovieToFirebase,
+    crawlerAndSaveBeautyArticleToPGDB
 }
