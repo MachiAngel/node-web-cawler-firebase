@@ -9,14 +9,13 @@
   },
   "engines": {
     "node": "8.9.1",
-    "npm": "5.3.0"
+    "npm": "5.5.1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "async": "^2.6.0",
     "axios": "^0.17.1",
-    "check-proxy": "^0.2.3",
     "cheerio": "^1.0.0-rc.2",
     "express": "^4.16.2",
     "firebase": "^4.8.1",
@@ -30,7 +29,6 @@
     "node-schedule": "^1.2.5",
     "node-xlsx": "^0.11.2",
     "pg": "^7.4.1",
-    "phantom": "^4.0.11",
     "request": "^2.83.0"
   },
   "devDependencies": {
