@@ -9,7 +9,7 @@ const getBeautyPageLink = async (pageCount = 3) => {
         const response = await axios.get(firstPage)
         const $ = cheerio.load(response.data)
         const prev = $('.btn-group-paging a').eq(1).attr('href').match(/\d+/)[0]
-        
+
         const pages = []
         for (var  i = 0; i < pageCount; i++ ) {
             if (i === 0) {
@@ -17,10 +17,10 @@ const getBeautyPageLink = async (pageCount = 3) => {
             }else {
                 pages.push(`https://www.ptt.cc/bbs/Beauty/index${prev - i + 1}.html`)
             }
-            
+
         }
         return pages
-        
+
         // return [firstPage,`https://www.ptt.cc/bbs/Beauty/index${prev}.html`,`https://www.ptt.cc/bbs/Beauty/index${prev - 1}.html`]
     }catch (e){
         console.log(e.message)
@@ -37,7 +37,7 @@ const getBeautyPageArticles = async (pages) => {
     try{
         let totalArticle = []
         const allPagesHtmlResponse = await Promise.all(pagesPromises)
-        
+
         allPagesHtmlResponse.forEach((response,i) => {
             const $ = cheerio.load(response.data)
             const resultArray = getTallyArticlesOfPage($)
@@ -54,7 +54,7 @@ const getBeautyPageArticles = async (pages) => {
 const getTallyArticlesOfPage = ($)=> {
     const articles = $('.r-ent')
     const tallyArticlesArray = []
-    
+
     articles.each((i,result) => {
         //Filter Value
         const rateString = $(result).find('.nrec').find('span').text().trim()
@@ -76,7 +76,7 @@ const getTallyArticlesOfPage = ($)=> {
         const href = $(result).find('.title').find('a').attr('href')
         const articleLink = `https://www.ptt.cc` + href
         // console.log(articleLink)
-        
+
         const date = $(result).find('.meta').find('.date').text().trim()
         // console.log(date)
         const author = $(result).find('.meta').find('.author').text().trim()
@@ -102,15 +102,17 @@ const getDetailsOfArticles = async (articles) => {
                 //const imageUrl = 'https://' + partUrl + '.jpg'
                 return 'https://' + partUrl + '.jpg'
             })
-            
+
             finalImageDetailArray.push({title, date, author, articleLink , rate, imageUrls})
-            
+
         }catch (e){
-            throw new Error(`cant get response:${articleLink}`)
+            console.log(`cant get response:${articleLink}`);
+            console.log(e.message)
+            // throw new Error(`cant get response:${articleLink}`)
         }
-        
+
     }
-    
+
     return finalImageDetailArray
 }
 
@@ -136,16 +138,16 @@ const updateOrInsertArticleToDb = async (tableName, article, pgdb) => {
         if (!updateResult.length) {
             throw new Error(`update article ${haveArticle[0].title} fail`)
         }
-        
+
         console.log(`article ${haveArticle[0].title} old rate:${haveArticle[0].rate}`)
         console.log(`article ${haveArticle[0].title} new rate:${updateResult[0].rate}`)
-        
+
         return updateResult[0]
         // console.log('need to update not insert:' + title)
         // console.log(`haveArticle:${haveArticle}`)
         // console.log(`haveArticle[0]:${JSON.stringify(haveArticle[0])}`)
         // console.log(`title:${haveArticle[0].title}`)
-        
+
     }else {
         //創一個transaction變數 使用 await ,變數結果會利用 function回傳 最後再用 async 丟出去
         //要是throw error 自然也用不到這個變數了
@@ -176,7 +178,7 @@ const updateOrInsertArticleToDb = async (tableName, article, pgdb) => {
                 })
                 .then(trx.commit)
                 .catch(trx.rollback)
-            
+
         }).then(result => {
             //回傳transation成功 return結果給transactionResult 變數
             return result

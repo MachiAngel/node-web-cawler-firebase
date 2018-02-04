@@ -11,7 +11,7 @@ const schedule = require('node-schedule')
 schedule.scheduleJob('*/4 * * * *', () => {
     console.log('--------開始匯率排程程式碼-----------')
     console.log(new Date())
-    
+
     removeToFireBasePromise()
         .then((result) => {
             console.log(result)
@@ -20,9 +20,25 @@ schedule.scheduleJob('*/4 * * * *', () => {
         console.log(e.message)
         cawlerStart()
     })
-    
+
     console.log('--------結束匯率排程程式碼-----------')
 })
+
+
+// 每x分
+schedule.scheduleJob('*/10 * * * *', () => {
+  
+  console.log('--------開始表特文章排程程式碼-----------')
+  crawlerAndSaveBeautyArticleToPGDB()
+      .then(resultArray => {
+          console.log(resultArray)
+      }).catch(e => {
+          console.log(e.message)
+  })
+  console.log('--------結束表特文章排程程式碼-----------')
+})
+
+
 
 schedule.scheduleJob('0 */1 * * *', () => {
     console.log('--------開始電影排程程式碼-----------')
@@ -33,17 +49,7 @@ schedule.scheduleJob('0 */1 * * *', () => {
         console.log(e.message)
     })
     console.log('--------結束電影排程程式碼-----------')
-    
-    console.log('--------開始表特文章排程程式碼-----------')
-    crawlerAndSaveBeautyArticleToPGDB()
-        .then(resultArray => {
-            console.log(resultArray)
-        }).catch(e => {
-            console.log(e.message)
-    })
-    console.log('--------結束表特文章排程程式碼-----------')
-    
-    
+
 })
 
 
@@ -71,98 +77,98 @@ const cawlerStart = () => {
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('808')
         .then((result) => {
             console.log(`'808' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('008')
         .then((result) => {
             console.log(`'008' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('009')
         .then((result) => {
             console.log(`'009' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('012')
         .then((result) => {
             console.log(`'012' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('021')
         .then((result) => {
             console.log(`'021' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('081')
         .then((result) => {
             console.log(`'081' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('816')
         .then((result) => {
             console.log(`'816' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('815')
         .then((result) => {
             console.log(`'815' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('812')
         .then((result) => {
             console.log(`'812' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('810')
         .then((result) => {
             console.log(`'810' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('809')
         .then((result) => {
             console.log(`'809' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('806')
         .then((result) => {
             console.log(`'806' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('805')
         .then((result) => {
             console.log(`'805' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('803')
         .then((result) => {
             console.log(`'803' save to firebase result:${result}`)
@@ -199,14 +205,14 @@ const cawlerStart = () => {
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('007')
         .then((result) => {
             console.log(`'007' save to firebase result:${result}`)
         }).catch((e) => {
         console.log(e)
     })
-    
+
     saveLastestRateToFirebase('006')
         .then((result) => {
             console.log(`'006' save to firebase result:${result}`)
@@ -214,5 +220,3 @@ const cawlerStart = () => {
         console.log(e)
     })
 }
-
-
