@@ -26,8 +26,8 @@ schedule.scheduleJob('*/4 * * * *', () => {
 
 
 // 每x分
-schedule.scheduleJob('*/10 * * * *', () => {
-  
+schedule.scheduleJob('*/20 * * * *', () => {
+
   console.log('--------開始表特文章排程程式碼-----------')
   crawlerAndSaveBeautyArticleToPGDB()
       .then(resultArray => {
