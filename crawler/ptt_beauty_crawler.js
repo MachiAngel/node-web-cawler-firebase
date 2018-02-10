@@ -1,7 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-
 //獲取前幾頁的urls
 const getBeautyPageLink = async (pageCount = 3) => {
     try{
@@ -150,9 +149,7 @@ const updateOrInsertArticleToDb = async (tableName, article, pgdb) => {
         if (!updateResult.length) {
             throw new Error(`update article ${haveArticle[0].title} fail`)
         }
-        
         return `id:${updateResult[0].article_id} title:${updateResult[0].title} 更新成功 `
-        
     }else {
         //創一個transaction變數 使用 await ,變數結果會利用 function回傳 最後再用 async 丟出去
         //要是throw error 自然也用不到這個變數了
@@ -219,14 +216,9 @@ const crawlerAndSaveBeautyArticleToPGDB = async () => {
 
 
 
-
-
-
 module.exports = {
     getBeautyPageResult,
     updateOrInsertArticleToDb
 }
 
-//getBeautyTop3PageResult().then((resultArray) => console.log(resultArray))
 
-// console.log($('#main-content').clone().children().remove().end().text().trim())

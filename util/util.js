@@ -17,6 +17,7 @@ const cralwer = require('../crawler/crawler')
 const YahooMovieCrawler = require('../crawler/yahoo_movie_crawler')
 const yahooCrawler = new YahooMovieCrawler()
 const beautyCrawler = require('../crawler/ptt_beauty_crawler')
+const movieCrawler = require('../crawler/ptt_movie_crawler')
 
 
 const crawlerAndSaveBeautyArticleToPGDB = async () => {
@@ -39,6 +40,24 @@ const crawlerAndSaveBeautyArticleToPGDB = async () => {
     
 }
 
+
+const crawlerAndSaveMovieArticleToPGDB = async () => {
+    try {
+        const resultArray = await movieCrawler.getMoviePageResult(3)
+        const savedResults = []
+        for (let aritcle of resultArray) {
+            try {
+                const savedResult = await movieCrawler.updateOrInsertMovieArticleToDb('ptt_movie_article',aritcle, pgdb)
+                savedResults.push(savedResult)
+            }catch (e) {
+                savedResults.push(e.message)
+            }
+        }
+        return savedResults
+    }catch (e) {
+        return e.message
+    }
+}
 
 const crawlAndSaveYahooMovieToFirebase = async () => {
 
@@ -423,5 +442,6 @@ module.exports = {
     removeToFireBasePromise,
     getFireBaseBestRateByCurrency,
     crawlAndSaveYahooMovieToFirebase,
-    crawlerAndSaveBeautyArticleToPGDB
+    crawlerAndSaveBeautyArticleToPGDB,
+    crawlerAndSaveMovieArticleToPGDB
 }
