@@ -26,7 +26,7 @@ const crawlerAndSaveBeautyArticleToPGDB = async () => {
         const savedResults = []
         for (let aritcle of resultArray) {
             try {
-                const savedResult = await beautyCrawler.updateOrInsertArticleToDb('articles',aritcle, pgdb)
+                const savedResult = await beautyCrawler.updateOrInsertArticleToDb('ptt_beauty_article',aritcle, pgdb)
                 savedResults.push(savedResult)
             }catch (e) {
                 savedResults.push(e.message)

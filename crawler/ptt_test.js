@@ -1,8 +1,8 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const {pgdb} = require('../db/pgdb')
 
-
-//獲取前三頁的數字
+//獲取前幾頁的urls
 const getBeautyPageLink = async (pageCount = 3) => {
     try{
         const firstPage = 'https://www.ptt.cc/bbs/Beauty/index.html'
@@ -31,12 +31,21 @@ const getBeautyPageLink = async (pageCount = 3) => {
 
 //獲取前三頁符合的所有文章 url
 const getBeautyPageArticles = async (pages) => {
-    const pagesPromises = pages.map(pageUrl => {
-        return axios.get(pageUrl)
-    })
+    // const pagesPromises = pages.map(pageUrl => {
+    //     return axios.get(pageUrl)
+    // })
     try{
         let totalArticle = []
-        const allPagesHtmlResponse = await Promise.all(pagesPromises)
+        const allPagesHtmlResponse = []
+        for (let pageUrl of pages ) {
+            try {
+                const result = await axios.get(pageUrl)
+                allPagesHtmlResponse.push(result)
+            }catch (e) {
+                console.log(e.message)
+            }
+        }
+        //const allPagesHtmlResponse = await Promise.all(pagesPromises)
         
         allPagesHtmlResponse.forEach((response,i) => {
             const $ = cheerio.load(response.data)
@@ -76,12 +85,15 @@ const getTallyArticlesOfPage = ($)=> {
         const href = $(result).find('.title').find('a').attr('href')
         const articleLink = `https://www.ptt.cc` + href
         // console.log(articleLink)
+    
+        const timeStamp = articleLink.substr(32,10)
+        const article_date = new Date(timeStamp * 1000)
         
         const date = $(result).find('.meta').find('.date').text().trim()
         // console.log(date)
         const author = $(result).find('.meta').find('.author').text().trim()
         // console.log(author)
-        tallyArticlesArray.push({title, date, author, articleLink , rate})
+        tallyArticlesArray.push({title, date, author, articleLink , rate, article_date})
     })
     return tallyArticlesArray
 }
@@ -90,7 +102,7 @@ const getDetailsOfArticles = async (articles) => {
     //const {title, date, author, articleLink , rate} = Articles
     let finalImageDetailArray = []
     for (let article of articles) {
-        const {title, date, author, articleLink , rate} = article
+        const {title, date, author, articleLink , rate,article_date} = article
         try {
             const response = await axios.get(articleLink)
             //直接解析body 符合正則
@@ -103,10 +115,12 @@ const getDetailsOfArticles = async (articles) => {
                 return 'https://' + partUrl + '.jpg'
             })
             
-            finalImageDetailArray.push({title, date, author, articleLink , rate, imageUrls})
+            finalImageDetailArray.push({title, date, author, articleLink , rate, imageUrls,article_date})
             
         }catch (e){
-            throw new Error(`cant get response:${articleLink}`)
+            console.log(`cant get response:${articleLink}`);
+            console.log(e.message)
+            // throw new Error(`cant get response:${articleLink}`)
         }
         
     }
@@ -126,10 +140,167 @@ const getBeautyPageResult = async (count = 3) => {
     }
 }
 
+//吃單一篇文章
+const updateOrInsertArticleToDb = async (tableName, article, pgdb) => {
+    const {title , author, articleLink , rate, imageUrls, article_date} = article
+    const haveArticle = await pgdb(tableName).where('article_url', '=', article.articleLink).returning('*')
+    if (haveArticle.length) {
+        //更新
+        const updateResult = await  pgdb(tableName).update({rate,update_date:new Date()}).where('article_id', '=', haveArticle[0].article_id).returning('*')
+        if (!updateResult.length) {
+            throw new Error(`update article ${haveArticle[0].title} fail`)
+        }
+        
+        return `id:${updateResult[0].article_id} title:${updateResult[0].title} 更新成功 `
+        
+    }else {
+        //創一個transaction變數 使用 await ,變數結果會利用 function回傳 最後再用 async 丟出去
+        //要是throw error 自然也用不到這個變數了
+        const transactionResult = await pgdb.transaction(trx => {
+            trx.insert({
+                title,
+                author,
+                rate,
+                article_url: articleLink,
+                create_date:new Date(),
+                update_date:new Date(),
+                article_date
+            })
+                .into(tableName)
+                .returning(['article_id','article_url'])
+                .then(article => {
+                    const imageArray = imageUrls.map(image_url => {
+                        return {
+                            image_url,
+                            article_id: article[0].article_id,
+                            article_url:article[0].article_url,
+                            create_date: new Date(),
+                            update_date: new Date()
+                        }
+                    })
+                    return pgdb('ptt_beauty_image')
+                        .returning('*')
+                        .insert(imageArray)
+                })
+                .then(trx.commit)
+                .catch(trx.rollback)
+            
+        }).then(result => {
+            //回傳transation成功 return結果給transactionResult 變數
+            return result
+        }).catch(e => {
+            ///回傳transation失敗
+            console.log(e.message)
+            throw new Error(`transation article: ${title} fail`)
+        })
+        //async await 最後吐回去的return
+        return transactionResult
+    }
+}
+
+const crawlerAndSaveBeautyArticleToPGDB = async () => {
+    try {
+        const resultArray = await getBeautyPageResult(3)
+        const savedResults = []
+        for (let aritcle of resultArray) {
+            try {
+                const savedResult = await updateOrInsertArticleToDb('ptt_beauty_article',aritcle, pgdb)
+                savedResults.push(savedResult)
+            }catch (e) {
+                savedResults.push(e.message)
+            }
+        }
+        return savedResults
+    }catch (e) {
+        return e.message
+    }
+    
+}
+
+
+
+const crawlerAllBeautyArticleToPGDB = async () => {
+    //let number = 2396
+    
+    const savedResults = []
+    
+    for(let i = 2394;i >= 1000; i--) {
+        try {
+            const resultArray = await getOnePageResult(i)
+            
+            for (let aritcle of resultArray) {
+                try {
+                    const savedResult = await updateOrInsertArticleToDb('ptt_beauty_article',aritcle, pgdb)
+                    savedResults.push(savedResult)
+                }catch (e) {
+                    savedResults.push(e.message)
+                }
+            }
+            console.log('finish one ')
+        }catch (e) {
+            console.log(`page ${i}  with error`)
+            
+        }
+        
+    }
+    return savedResults
+    
+}
+
+const getOnePageResult = async (id) => {
+    try {
+        const articlesLinks = await getBeautyPageArticles([`https://www.ptt.cc/bbs/Beauty/index${id}.html`])
+        const finalResultArray = await getDetailsOfArticles(articlesLinks)
+        return finalResultArray
+    }catch (e) {
+        throw e
+    }
+}
+
+
+// crawlerAllBeautyArticleToPGDB().then(result => {
+//     console.log(result)
+//     console.log('stop and finish')
+// }).catch(e => {
+//     console.log(e.message)
+// })
+
+
+//
+
+// crawlerAndSaveBeautyArticleToPGDB().then(result => {
+//     console.log(result)
+// }).catch(e => {
+//     console.log(e.message)
+// })
+
+
+
+//
+// pgdb.select('article_id','article_url').from('ptt_beauty_article').whereNull('article_date').then(results => {
+//     console.log(results)
+//     for (let result of results) {
+//         const {article_id , article_url} = result
+//
+//         const timeStamp = article_url.substr(32,10)
+//         const article_date = new Date(timeStamp * 1000)
+//         pgdb('ptt_beauty_article').update({article_date})
+//             .where('article_id', '=', article_id)
+//             .returning('*')
+//             .then(result => {
+//             console.log(result)
+//         }).catch(e => {
+//             console.log(e)
+//         })
+//     }
+//
+// })
+
 
 
 module.exports = {
-    getBeautyPageResult
+    getBeautyPageResult,
+    updateOrInsertArticleToDb
 }
 
 //getBeautyTop3PageResult().then((resultArray) => console.log(resultArray))
