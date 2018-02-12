@@ -31,6 +31,17 @@ const getCurrentHourTime = () => {
     return nowHour
 }
 
+
+const replaceCHNumToNumAndlowerCase = (str) => {
+    const chnNumChar = {'零':'0', '一':'1', '二':'2', '三':'3', '四':'4', '五':'5', '六':'6', '七':'7', '八':'8', '九':'9'}
+    let repalceStr = str
+    for (var x in chnNumChar) {
+        repalceStr = repalceStr.replace(new RegExp(x, 'g'), chnNumChar[x]);
+    }
+    return repalceStr.toLowerCase()
+}
+
 module.exports.convertStringToNumberFunction = convertStringToNumberFunction
 module.exports.checkTime = checkTime
 module.exports.getCurrentHourTime = getCurrentHourTime
+module.exports.replaceCHNumToNumAndlowerCase = replaceCHNumToNumAndlowerCase

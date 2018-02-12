@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-
+const {replaceCHNumToNumAndlowerCase} = require('../util/publicfuction')
 
 
 //獲取Movie前幾頁的urls
@@ -86,15 +86,15 @@ const getMovieTallyArticlesOfPage = ($)=> {
             isGood = null
         }
         
-        
         const href = $(result).find('.title').find('a').attr('href')
         const article_url = `https://www.ptt.cc` + href
         const timeStamp = article_url.substr(31,10)
         const article_date = new Date(timeStamp * 1000)
         
         const author = $(result).find('.meta').find('.author').text().trim()
+        const title_s = replaceCHNumToNumAndlowerCase(title)
         // console.log(author)
-        tallyArticlesArray.push({title, author, article_url,article_type , article_date,isGood})
+        tallyArticlesArray.push({title, title_s, author, article_url, article_type, article_date, isGood})
     })
     return tallyArticlesArray
 }
@@ -103,7 +103,7 @@ const getMovieTallyArticlesOfPage = ($)=> {
 
 //吃單一電影篇文章
 const updateOrInsertMovieArticleToDb = async (tableName = 'ptt_movie_article', article, pgdb) => {
-    const {title , author, article_url , article_type, article_date, isGood} = article
+    const {title,title_s , author, article_url , article_type, article_date, isGood} = article
     const haveArticle = await pgdb(tableName).where('article_url', '=', article_url).returning('*')
     if (haveArticle.length) {
         //更新
@@ -113,6 +113,7 @@ const updateOrInsertMovieArticleToDb = async (tableName = 'ptt_movie_article', a
             const result = await pgdb(tableName).returning('*')
                 .insert({
                 title,
+                title_s,
                 author,
                 article_url,
                 article_type,
@@ -141,6 +142,7 @@ const getMoviePageResult = async (count = 3) => {
         throw e
     }
 }
+
 
 
 module.exports = {
