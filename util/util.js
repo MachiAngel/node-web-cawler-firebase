@@ -123,13 +123,6 @@ const combinePttMovieCommentToResult = async (movieArray) => {
 }
 
 
-crawlAndSaveYahooMovieToFirebase().then(result => {
-    console.log(result)
-}).catch(e => {
-    console.log(e.message)
-})
-
-
 //公用function firebase
 const saveLastestRateToFirebase = async (bankCode) => {
     const bankInfo = bankInfoDict[bankCode]
