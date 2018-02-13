@@ -10,9 +10,7 @@ const Rate = require('../model/rate.js')
 const {FirebaseDb} = require('../db/firebaseDb')
 const {pgdb} = require('../db/pgdb')
 
-
 //util and crawler
-
 const cralwer = require('../crawler/crawler')
 const YahooMovieCrawler = require('../crawler/yahoo_movie_crawler')
 const yahooCrawler = new YahooMovieCrawler()
@@ -62,17 +60,69 @@ const crawlerAndSaveMovieArticleToPGDB = async () => {
 const crawlAndSaveYahooMovieToFirebase = async () => {
 
   try {
-    const resultArray = await yahooCrawler.getRecentYahooMovieData()
-
-    const finalDict = {}
-    finalDict[`/YahooTopMovie/`] = resultArray
-    const savedResult = await saveToFireBasePromise(finalDict)
-    return savedResult
+      const resultArray = await yahooCrawler.getRecentYahooMovieData()
+      const combinedPttMovieCommentArray = await combinePttMovieCommentToResult(resultArray)
+      const finalDict = {}
+      finalDict[`/YahooTopMovie/`] = combinedPttMovieCommentArray
+      const savedResult = await saveToFireBasePromise(finalDict)
+      return savedResult
   }catch (e) {
-    return e.message
+      return e.message
   }
   
 }
+
+
+const combinePttMovieCommentToResult = async (movieArray) => {
+    let newArray = []
+    for (let movie of movieArray) {
+        let pttGood = '0'
+        let pttBad = '0'
+        const {movie_name_ch, movie_name_en, yahoo_rate,
+            yahoo_rate_count, movieTime_url, poster_url,
+            release_date, movie_length, imdb_rate} = movie
+        let searchPttString = movie_name_ch
+        if (movie_name_ch.length > 4) {
+            searchPttString = movie_name_ch.substr(0,4)
+        }
+        try {
+            //三個月前時間
+            const subtractDateString = new moment().subtract(3, 'months').format('YYYY-MM-DD')
+            const pttarticleResults = await pgdb.select('isgood',pgdb.raw('COUNT(article_id)'))
+                .from('ptt_movie_article')
+                .whereNotNull('isgood')
+                .andWhere('title', 'like', `%${subtractDateString}%`)
+                .andWhere('article_date','>',subtractDateString)
+                .groupByRaw('isgood')
+            
+            if (pttarticleResults.length) {
+                for (let each of pttarticleResults) {
+                    const {isgood, count} = each
+                    if (isgood === true ){
+                        pttGood = count
+                    }else if (isgood === false) {
+                        pttBad = count
+                    }
+                }
+                newArray.push({movie_name_ch, movie_name_en, yahoo_rate, yahoo_rate_count,
+                    movieTime_url, poster_url, release_date, movie_length, imdb_rate, pttGood, pttBad,searchPttString})
+            }else {
+                newArray.push({movie_name_ch, movie_name_en, yahoo_rate, yahoo_rate_count,
+                    movieTime_url, poster_url, release_date, movie_length, imdb_rate, pttGood, pttBad,searchPttString})
+            }
+            
+        }catch (e) {
+            console.log(e.message)
+            newArray.push({movie_name_ch, movie_name_en, yahoo_rate, yahoo_rate_count,
+                movieTime_url, poster_url, release_date, movie_length, imdb_rate, pttGood, pttBad,searchPttString})
+        }
+    }
+    return newArray
+}
+
+
+
+
 
 //公用function firebase
 const saveLastestRateToFirebase = async (bankCode) => {

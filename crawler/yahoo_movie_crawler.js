@@ -2,7 +2,6 @@ const axios = require('axios')
 const cheerio = require("cheerio")
 
 
-
 module.exports = class YahooMovieCrawler {
     //internal method
      async getYahooTopMovieLinkList () {
