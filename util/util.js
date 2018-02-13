@@ -62,7 +62,7 @@ const crawlerAndSaveMovieArticleToPGDB = async () => {
 const crawlAndSaveYahooMovieToFirebase = async () => {
 
   try {
-    const resultArray = await yahooCrawler.getFinalYahooTopMovieData()
+    const resultArray = await yahooCrawler.getRecentYahooMovieData()
 
     const finalDict = {}
     finalDict[`/YahooTopMovie/`] = resultArray
@@ -429,7 +429,6 @@ const bankInfoDict = {
         bankCawler:cralwer.getRealTimeResultFromCooperativeBank
     }
 }
-
 
 
 

@@ -87,8 +87,7 @@ module.exports = class YahooMovieCrawler {
              }
              // console.log(imdb_rate)
              // console.log('------------------------')
-
-
+             
              return {
                  movie_name_ch,
                  movie_name_en,
@@ -122,6 +121,51 @@ module.exports = class YahooMovieCrawler {
         }
 
     }
+    
+    async getRecentMovieUrlArray()  {
+        const url = 'https://movies.yahoo.com.tw/api/v1/movie_in_theater_all'
+        const authorization = '21835b082e15b91a69b3851eec7b31b82ce82afb'
+        try {
+            const result = await axios.request({url:url,method:'get',headers:{'mv-authorization':authorization}})
+            if (result.status !== 200) {
+                return undefined
+            }
+            
+            const sortedDateAndSliceArray = result.data.sort((a,b) => {
+                let aDate = new Date(a.release_date)
+                let bDate = new Date(b.release_date)
+                return bDate - aDate
+            }).slice(0,20).map((movieObejct) => {
+                return `https://movies.yahoo.com.tw/movieinfo_main.html/id=${movieObejct.movie_id}`
+            })
+            
+            return sortedDateAndSliceArray
+        }catch (e) {
+            return undefined
+        }
+    }
+    
+    async getRecentYahooMovieData() {
+        try {
+            const urlArray = await this.getRecentMovieUrlArray()
+            if (urlArray === undefined) {
+                return undefined
+            }
+            const responseArray = await this.downloadAllYahooPage(urlArray)
+            
+            const cheerioObjectArray = responseArray.map((response) => {
+                return cheerio.load(response.data)
+            })
+            console.log(cheerioObjectArray.length)
+            const resultArray = this.parseYahooMoviePages(cheerioObjectArray)
+            return resultArray
+        }catch (e) {
+            throw e
+        }
+        
+    }
 }
+
+
 
 
