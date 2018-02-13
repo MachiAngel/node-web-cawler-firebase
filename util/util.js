@@ -91,7 +91,7 @@ const combinePttMovieCommentToResult = async (movieArray) => {
             const pttarticleResults = await pgdb.select('isgood',pgdb.raw('COUNT(article_id)'))
                 .from('ptt_movie_article')
                 .whereNotNull('isgood')
-                .andWhere('title', 'like', `%${subtractDateString}%`)
+                .andWhere('title', 'like', `%${searchPttString}%`)
                 .andWhere('article_date','>',subtractDateString)
                 .groupByRaw('isgood')
             
@@ -134,7 +134,7 @@ const saveLastestRateToFirebase = async (bankCode) => {
     }
     const resultDict = await bankInfo.bankCawler()
     const momentResultTime = resultDict.resultTime
-
+    
     //轉換後資料
     const resultTimeString = momentResultTime.format('YYYY/MM/DD HH:mm')
     const newResultDict = parseMomentTimeToStringAndSort(resultDict)
@@ -479,9 +479,6 @@ const bankInfoDict = {
         bankCawler:cralwer.getRealTimeResultFromCooperativeBank
     }
 }
-
-
-
 
 
 module.exports = {
