@@ -38,7 +38,7 @@ const replaceCHNumToNumAndlowerCase = (str) => {
     for (var x in chnNumChar) {
         repalceStr = repalceStr.replace(new RegExp(x, 'g'), chnNumChar[x]);
     }
-    return repalceStr.toLowerCase()
+    return repalceStr.toLowerCase().replace(/\s+/g, '').replace('：',':');
 }
 
 module.exports.convertStringToNumberFunction = convertStringToNumberFunction

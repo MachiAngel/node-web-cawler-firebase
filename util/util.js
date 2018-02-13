@@ -11,6 +11,7 @@ const {FirebaseDb} = require('../db/firebaseDb')
 const {pgdb} = require('../db/pgdb')
 
 //util and crawler
+const {replaceCHNumToNumAndlowerCase} = require('./publicfuction')
 const cralwer = require('../crawler/crawler')
 const YahooMovieCrawler = require('../crawler/yahoo_movie_crawler')
 const yahooCrawler = new YahooMovieCrawler()
@@ -81,9 +82,10 @@ const combinePttMovieCommentToResult = async (movieArray) => {
         const {movie_name_ch, movie_name_en, yahoo_rate,
             yahoo_rate_count, movieTime_url, poster_url,
             release_date, movie_length, imdb_rate} = movie
-        let searchPttString = movie_name_ch
+        const modifyString = replaceCHNumToNumAndlowerCase(movie_name_ch)
+        let searchPttString = modifyString.replace(/\s+/g, '').replace('：',':');
         if (movie_name_ch.length > 4) {
-            searchPttString = movie_name_ch.substr(0,4)
+            searchPttString = searchPttString.substr(0,4)
         }
         try {
             //三個月前時間
@@ -91,7 +93,7 @@ const combinePttMovieCommentToResult = async (movieArray) => {
             const pttarticleResults = await pgdb.select('isgood',pgdb.raw('COUNT(article_id)'))
                 .from('ptt_movie_article')
                 .whereNotNull('isgood')
-                .andWhere('title', 'like', `%${searchPttString}%`)
+                .andWhere('title_s', 'like', `%${searchPttString}%`)
                 .andWhere('article_date','>',subtractDateString)
                 .groupByRaw('isgood')
             
@@ -121,7 +123,11 @@ const combinePttMovieCommentToResult = async (movieArray) => {
 }
 
 
-
+crawlAndSaveYahooMovieToFirebase().then(result => {
+    console.log(result)
+}).catch(e => {
+    console.log(e.message)
+})
 
 
 //公用function firebase
