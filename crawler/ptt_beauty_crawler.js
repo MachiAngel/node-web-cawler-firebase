@@ -1,6 +1,9 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+
+
+
 //獲取前幾頁的urls
 const getBeautyPageLink = async (pageCount = 3) => {
     try{
@@ -114,7 +117,7 @@ const getDetailsOfArticles = async (articles) => {
                 return 'https://' + partUrl + '.jpg'
             })
             
-            finalImageDetailArray.push({title, date, author, articleLink , rate, imageUrls,article_date})
+            finalImageDetailArray.push({ title, date, author, articleLink, rate, imageUrls, article_date, pre_image: imageUrls[0]})
             
         }catch (e){
             console.log(`cant get response:${articleLink}`);
@@ -141,7 +144,7 @@ const getBeautyPageResult = async (count = 3) => {
 
 //吃單一篇文章
 const updateOrInsertArticleToDb = async (tableName, article, pgdb) => {
-    const {title , author, articleLink , rate, imageUrls, article_date} = article
+    const { title, author, articleLink, rate, imageUrls, article_date, pre_image} = article
     const haveArticle = await pgdb(tableName).where('article_url', '=', article.articleLink).returning('*')
     if (haveArticle.length) {
         //更新
@@ -161,7 +164,8 @@ const updateOrInsertArticleToDb = async (tableName, article, pgdb) => {
                 article_url: articleLink,
                 create_date:new Date(),
                 update_date:new Date(),
-                article_date
+                article_date,
+                pre_image
             })
                 .into(tableName)
                 .returning(['article_id','article_url'])
