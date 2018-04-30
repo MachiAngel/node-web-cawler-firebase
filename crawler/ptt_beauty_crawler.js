@@ -107,15 +107,30 @@ const getDetailsOfArticles = async (articles) => {
         const {title, date, author, articleLink , rate,article_date} = article
         try {
             const response = await axios.get(articleLink)
-            //直接解析body 符合正則
-            const mactchArray = response.data.match(/imgur.com\/[0-9a-zA-Z]{7}/g)
-            //去掉重複
-            const partImagesUrls = [ ...new Set(mactchArray) ]
-            //組成final object array
-            const imageUrls = partImagesUrls.map(partUrl => {
-                //const imageUrl = 'https://' + partUrl + '.jpg'
-                return 'https://' + partUrl + '.jpg'
+
+            //#new
+            const $ = cheerio.load(response.data)
+            //找到整個html第一個f2,拿到同級的所有tag , 在找出是tag a (找到後變成字典)
+            //用each拿取href內容 , (text明明有卻拿不到)
+            $('.f2').first().prevAll().find('a').each((i, object) => {
+                tempUrls.push('https:' + $(object).attr('href'))
             })
+
+            //預先檢查保證只有imgur 並反轉
+            const imageUrls = tempUrls.filter(ele => {
+                return ele.includes('https://imgur.com')
+            }).reverse()
+
+            //#old
+            // //直接解析body 符合正則
+            // const mactchArray = response.data.match(/imgur.com\/[0-9a-zA-Z]{7}/g)
+            // //去掉重複
+            // const partImagesUrls = [ ...new Set(mactchArray) ]
+            // //組成final object array
+            // const imageUrls = partImagesUrls.map(partUrl => {
+            //     //const imageUrl = 'https://' + partUrl + '.jpg'
+            //     return 'https://' + partUrl + '.jpg'
+            // })
             
             finalImageDetailArray.push({ title, date, author, articleLink, rate, imageUrls, article_date, pre_image: imageUrls[0]})
             
