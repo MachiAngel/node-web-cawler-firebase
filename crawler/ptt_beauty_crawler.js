@@ -107,18 +107,21 @@ const getDetailsOfArticles = async (articles) => {
         const {title, date, author, articleLink , rate,article_date} = article
         try {
             const response = await axios.get(articleLink)
-
+            const tempUrls = []
             //#new
             const $ = cheerio.load(response.data)
             //找到整個html第一個f2,拿到同級的所有tag , 在找出是tag a (找到後變成字典)
             //用each拿取href內容 , (text明明有卻拿不到)
-            $('.f2').first().prevAll().find('a').each((i, object) => {
-                tempUrls.push('https:' + $(object).attr('href'))
+            $('.f2').first().prevAll().each((i, tag) => {
+                const imageUrl = $(tag).attr('href')
+                if (imageUrl) {
+                    tempUrls.push(imageUrl)
+                }
             })
 
-            //預先檢查保證只有imgur 並反轉
+            // 預先檢查保證只拿圖片 並反轉
             const imageUrls = tempUrls.filter(ele => {
-                return ele.includes('https://imgur.com')
+                return ele.includes('.png') || ele.includes('.jpg') || ele.includes('.jpeg')
             }).reverse()
 
             //#old
@@ -159,7 +162,16 @@ const getBeautyPageResult = async (count = 3) => {
 
 //吃單一篇文章
 const updateOrInsertArticleToDb = async (tableName, article, pgdb) => {
+
     const { title, author, articleLink, rate, imageUrls, article_date, pre_image} = article
+    
+    if (imageUrls === undefined) {
+        return `articleLink:${articleLink} have no imageUrls`
+    }
+    if (imageUrls === 0) {
+        return `articleLink:${articleLink} have no imageUrls array empty`
+    }
+
     const haveArticle = await pgdb(tableName).where('article_url', '=', article.articleLink).returning('*')
     if (haveArticle.length) {
         //更新
