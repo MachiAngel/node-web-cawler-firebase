@@ -115,7 +115,10 @@ const getDetailsOfArticles = async (articles) => {
             $('.f2').first().prevAll().each((i, tag) => {
                 const imageUrl = $(tag).attr('href')
                 if (imageUrl) {
-                    tempUrls.push(imageUrl)
+                    if (imageUrl.includes('imgur')) {
+                        const modifiedUrl = imageUrl.replace('http://i.imgur.com', 'https://i.imgur.com').replace('http://imgur.com', 'https://imgur.com')
+                        tempUrls.push(modifiedUrl)
+                    }
                 }
             })
 
@@ -168,7 +171,7 @@ const updateOrInsertArticleToDb = async (tableName, article, pgdb) => {
     if (imageUrls === undefined) {
         return `articleLink:${articleLink} have no imageUrls`
     }
-    if (imageUrls === 0) {
+    if (imageUrls.length === 0) {
         return `articleLink:${articleLink} have no imageUrls array empty`
     }
 

@@ -104,16 +104,24 @@ const getDetailsOfArticles = async (articles) => {
     for (let article of articles) {
         const {title, date, author, articleLink , rate,article_date} = article
         try {
+            const tempUrls = []
             const response = await axios.get(articleLink)
-            //直接解析body 符合正則
-            const mactchArray = response.data.match(/imgur.com\/[0-9a-zA-Z]{7}/g)
-            //去掉重複
-            const partImagesUrls = [ ...new Set(mactchArray) ]
-            //組成final object array
-            const imageUrls = partImagesUrls.map(partUrl => {
-                //const imageUrl = 'https://' + partUrl + '.jpg'
-                return 'https://' + partUrl + '.jpg'
+
+            //#new
+            const $ = cheerio.load(response.data)
+            //找到整個html第一個f2,拿到同級的所有tag , 在找出是tag a (找到後變成字典)
+            //用each拿取href內容 , (text明明有卻拿不到)
+            $('.f2').first().prevAll().each((i, tag) => {
+                const imageUrl = $(tag).attr('href')
+                if (imageUrl) {
+                    tempUrls.push(imageUrl)
+                }
             })
+
+            // 預先檢查保證只拿圖片 並反轉
+            const imageUrls = tempUrls.filter(ele => {
+                return ele.includes('.png') || ele.includes('.jpg') || ele.includes('.jpeg')
+            }).reverse()
             
             finalImageDetailArray.push({title, date, author, articleLink , rate, imageUrls,article_date})
             
@@ -243,8 +251,36 @@ const crawlerAllBeautyArticleToPGDB = async () => {
         }
         
     }
-    return savedResults
+    return 'done'
     
+}
+
+
+const crawlerAllBeautyArticleToPGDB = async () => {
+    
+    for (let i = 2467; i >= 1000; i--) {
+        try {
+            const resultArray = await getOnePageResult(i)
+
+            for (let aritcle of resultArray) {
+                try {
+
+                    //const savedResult = await updateOrInsertArticleToDb('ptt_beauty_article', aritcle, pgdb)
+                    savedResults.push(savedResult)
+                } catch (e) {
+                    savedResults.push(e.message)
+                }
+            }
+            console.log('finish one ')
+        } catch (e) {
+            
+            console.log(`page ${i}  with error`)
+
+        }
+
+    }
+    return 'done'
+
 }
 
 const getOnePageResult = async (id) => {

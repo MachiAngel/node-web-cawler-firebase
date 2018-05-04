@@ -8,7 +8,7 @@ const check = (arr) => {
     console.log([...new Set(arr)].length == 1 ? true : false)
 }
 
-describe.skip('即時匯率API Test',() => {
+describe.only('即時匯率API Test',() => {
     
     //#1 台灣銀行
     it('會下載台灣銀行最新匯率19種幣別資料', async () => {
