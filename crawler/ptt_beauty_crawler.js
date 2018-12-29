@@ -92,9 +92,9 @@ const getTallyArticlesOfPage = ($)=> {
         const article_date = new Date(timeStamp * 1000)
         
         const date = $(result).find('.meta').find('.date').text().trim()
-        // console.log(date)
+        
         const author = $(result).find('.meta').find('.author').text().trim()
-        // console.log(author)
+        
         tallyArticlesArray.push({title, date, author, articleLink , rate, article_date})
     })
     return tallyArticlesArray

@@ -1,3 +1,4 @@
+require('dotenv').config()
 
 const {saveLastestRateToFirebase, removeToFireBasePromise, crawlAndSaveYahooMovieToFirebase, crawlerAndSaveBeautyArticleToPGDB,crawlerAndSaveMovieArticleToPGDB} = require('./util/util')
 const schedule = require('node-schedule')
@@ -26,7 +27,7 @@ schedule.scheduleJob('*/4 * * * *', () => {
 
 
 // 每x分
-schedule.scheduleJob('*/20 * * * *', () => {
+schedule.scheduleJob('*/1 * * * *', () => {
 
   console.log('--------開始表特與電影文章排程程式碼-----------')
   crawlerAndSaveBeautyArticleToPGDB()
@@ -147,12 +148,13 @@ const cawlerStart = () => {
         console.log(e)
     })
 
-    saveLastestRateToFirebase('810')
-        .then((result) => {
-            console.log(`'810' save to firebase result:${result}`)
-        }).catch((e) => {
-        console.log(e)
-    })
+    //壞了
+    // saveLastestRateToFirebase('810')
+    //     .then((result) => {
+    //         console.log(`'810' save to firebase result:${result}`)
+    //     }).catch((e) => {
+    //     console.log(e)
+    // })
 
     saveLastestRateToFirebase('809')
         .then((result) => {

@@ -12,10 +12,11 @@ const knex = require('knex')
 // })
 
 
-const url = 'postgres://izphwmbnwhbhbr:b77f2483ad1fe298be80d5a2cf6813781a16404ea0207553977cae61df721c48@ec2-54-243-59-122.compute-1.amazonaws.com:5432/d3p4pg7cohkuo4'
+// + '?ssl=true'
+
 const pgdb = knex({
     client: 'pg',
-    connection: url + '?ssl=true'
+    connection: process.env.PG_URL
 })
 
 
